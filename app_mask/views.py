@@ -2,76 +2,15 @@ import datetime
 import json
 import os
 import random
+from app_mask import app, config, local_db, face_detect, ocr, login_manager, account
 from flask import render_template, request, jsonify, make_response, send_from_directory, url_for, redirect
-from app_mask import app, config, local_db, face_detect, ocr, login_manager
-from werkzeug.security import generate_password_hash, check_password_hash
-import uuid
 from flask_login import UserMixin, login_required, current_user, login_user, logout_user
- # 引入用户基类
-
-
-USERS = [
-    {
-        "id": 1,
-        "name": 'xchkoo',
-        "mail": "Xchkoo@foxmail.com",
-        "sex": "male",
-        "position": "Hangzhou",
-        "status": "Admin",
-        "password": generate_password_hash('123')
-    }
-]
-
-
-def create_user(user_name, password):
-    """创建一个用户"""
-    user = {
-        "name": user_name,
-        "password": generate_password_hash(password),
-        "id": uuid.uuid4()
-    }
-    USERS.append(user)
-
-
-def get_user(user_name):
-    """根据用户名获得用户记录"""
-    for user in USERS:
-        if user.get("name") == user_name:
-            return user
-    return None
-
-
-class User(UserMixin):
-    """用户类"""
-    def __init__(self, user):
-        self.username = user.get("name")
-        self.password_hash = user.get("password")
-        self.id = user.get("id")
-
-    def verify_password(self, password):
-        """密码验证"""
-        if self.password_hash is None:
-            return False
-        return check_password_hash(self.password_hash, password)
-
-    def get_id(self):
-        """获取用户ID"""
-        return self.id
-
-    @staticmethod
-    def get(user_id):
-        """根据用户ID获取用户实体，为 login_user 方法提供支持"""
-        if not user_id:
-            return None
-        for user in USERS:
-            if user.get('id') == user_id: # user["id"]
-                return User(user)
-        return None
+import uuid
 
 
 @login_manager.user_loader  # 定义获取登录用户的方法
 def load_user(user_id):
-    return User.get(user_id)
+    return account.User.get(user_id)
 
 
 @app.route('/login/', methods=['GET', 'POST'])  # 登录
@@ -82,12 +21,12 @@ def login():
         user_remember_me = False
         if request.form['remember_me'] == 'on':
             user_remember_me = True
-        user_info = get_user(user_name)
+        user_info = account.get_user(user_name)
         if user_info is None:
             msg = "用户名或密码有误"
             return jsonify({'msg': msg})
         else:
-            user = User(user_info)  # 创建用户实体
+            user = account.User(user_info)  # 创建用户实体
             if user.verify_password(user_passwd):  # 校验密码
                 login_user(user, remember = user_remember_me)  # 创建用户 Session
                 msg = "登录成功"
@@ -108,16 +47,18 @@ def logout():
 @app.route("/settings", methods=['GET'])
 @login_required
 def settings():
-    pass
-
-
-@app.route('/', methods=['GET'])
-def index():
-    return render_template('index.html')
+    return render_template('setting.html',
+                           id=current_user.id,
+                           name=current_user.username,
+                           mail=current_user.mail,
+                           sex=current_user.sex,
+                           position=current_user.position,
+                           status=current_user.status)
 
 
 @app.route('/home/', methods=['GET'])
-def home():
+@app.route('/', methods=['GET'])
+def index():
     return render_template('index.html')
 
 
@@ -143,14 +84,14 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in config.ALLOWED_EXTENSIONS
 
 
-def create_uuid():
-    now_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    random_num = random.randint(0, 100)
-    if random_num <= 10:
-        random_num = str(0) + str(random_num)
-    unique_num = str(now_time) + str(random_num)
-    return unique_num
-
+# def create_uuid():
+#     now_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+#     random_num = random.randint(0, 100)
+#     if random_num <= 10:
+#         random_num = str(0) + str(random_num)
+#     unique_num = str(now_time) + str(random_num)
+#     return unique_num
+#
 
 # face_register
 @app.route('/register/', methods=['GET', 'POST'])
@@ -190,7 +131,7 @@ def check_add_photo():
         if file and allowed_file(file.filename):
             filename = file.filename
             ext = filename.rsplit('.', 1)[1]
-            filename = create_uuid() + '.' + ext
+            filename = uuid.uuid4() + '.' + ext
             file.save(config.APP_PATH + "/" + app.config['UPLOAD_FOLDER'] + 'ADD_PHOTO/check/' + filename)
             res = face_detect.mask_detect(path=app.config['UPLOAD_FOLDER'] + "ADD_PHOTO/check/" + filename)
             if res['msg'] == 'SUCCESS':
