@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import random
@@ -48,7 +49,7 @@ def logout():
 def settings():
     return render_template('setting.html',
                            id=current_user.id,
-                           name=current_user.username,
+                           username=current_user.username,
                            mail=current_user.mail,
                            sex=current_user.sex,
                            position=current_user.position,
@@ -73,8 +74,9 @@ def console():
 
 
 @app.route('/face_view/', methods=['GET'])
+@login_required
 def face_view():
-    return render_template('face_view.html')
+    return render_template('face_view.html', username=current_user.username)
 
 
 # check
@@ -83,17 +85,18 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in config.ALLOWED_EXTENSIONS
 
 
-# def create_uuid():
-#     now_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-#     random_num = random.randint(0, 100)
-#     if random_num <= 10:
-#         random_num = str(0) + str(random_num)
-#     unique_num = str(now_time) + str(random_num)
-#     return unique_num
-#
+def create_uuid():
+    now_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    random_num = random.randint(0, 100)
+    if random_num <= 10:
+        random_num = str(0) + str(random_num)
+    unique_num = str(now_time) + str(random_num)
+    return unique_num
+
 
 # face_register
 @app.route('/register/', methods=['GET', 'POST'])
+@login_required
 def register():
     if request.method == 'POST':
         name = request.form['name']
@@ -116,10 +119,11 @@ def register():
                 return jsonify({'msg': 'face already exist'})
         else:
             return jsonify({'msg': 'ILLEGAL'})
-    return render_template('register.html')
+    return render_template('register.html',  username=current_user.username)
 
 
 @app.route('/check_add_photo/', methods=['GET', 'POST'])
+@login_required
 def check_add_photo():
     if request.method == 'POST':
         file = request.files['photo']
@@ -130,7 +134,7 @@ def check_add_photo():
         if file and allowed_file(file.filename):
             filename = file.filename
             ext = filename.rsplit('.', 1)[1]
-            filename = uuid.uuid4() + '.' + ext
+            filename = create_uuid() + '.' + ext
             file.save(config.APP_PATH + "/" + app.config['UPLOAD_FOLDER'] + 'ADD_PHOTO/check/' + filename)
             res = face_detect.mask_detect(path=app.config['UPLOAD_FOLDER'] + "ADD_PHOTO/check/" + filename)
             if res['msg'] == 'SUCCESS':
@@ -142,16 +146,18 @@ def check_add_photo():
         else:
             return jsonify({'msg': 'FILE ILLEGAL'})
     else:
-        return render_template('check_add_photo.html')
+        return render_template('check_add_photo.html',  username=current_user.username)
 
 
 @app.route('/check_result/', methods=['GET'])
+@login_required
 def check_result():
-    return render_template('check_result.html')
+    return render_template('check_result.html',  username=current_user.username)
 
 
 # homework
 @app.route('/homework_add_photo/', methods=['GET', 'POST'])
+@login_required
 def homework_add_photo():
     if request.method == 'POST':
         subject = request.form['subject']
@@ -202,10 +208,11 @@ def homework_add_photo():
             return jsonify({'msg': 'SUCCESS'})
         else:
             return jsonify({'msg': 'FILE ILLEGAL'})
-    return render_template('homework_add_photo.html')
+    return render_template('homework_add_photo.html',  username=current_user.username)
 
 
 @app.route('/homework_result/', methods=['GET', 'POST'])
+@login_required
 def homework_result():
     if request.method == 'POST':
         res = {}
@@ -215,11 +222,12 @@ def homework_result():
             info = local_db.get_homework_data(i)
             res[i] = {"info": info, "num": num}
         return jsonify(res)
-    return render_template("homework_result.html")
+    return render_template("homework_result.html",  username=current_user.username)
 
 
 # class
 @app.route('/class_add_photo/', methods=['GET', 'POST'])
+@login_required
 def class_add_photo():
     if request.method == 'POST':
         file = request.files['photo']
@@ -237,20 +245,22 @@ def class_add_photo():
             return jsonify({'msg': 'SUCCESS'})
         else:
             return jsonify({'msg': 'FILE ILLEGAL'})
-    return render_template('class_add_photo.html')
+    return render_template('class_add_photo.html',  username=current_user.username)
 
 
 @app.route('/class_result/', methods=['GET', 'POST'])
+@login_required
 def class_result():
     if request.method == "POST":
         info = local_db.get_class()
         num = local_db.get_class_num()
         return jsonify({"info": info, "num": num})
-    return render_template('class_result.html')
+    return render_template('class_result.html',  username=current_user.username)
 
 
 # student
 @app.route('/search/', methods=['GET', 'POST'])
+@login_required
 def search():
     if request.method == "POST":
         tid = local_db.name_to_trans_id(request.form['name'])
@@ -270,10 +280,11 @@ def search():
                         "check": check_res,
                         "homework": homework_res,
                         "class": class_res})
-    return render_template('search.html')
+    return render_template('search.html',  username=current_user.username)
 
 
 @app.route('/stu/<string:student_id>', methods=['GET', 'POST'])
+@login_required
 def get_stu(student_id):
     if request.method == 'POST':
         content = request.json
@@ -286,6 +297,7 @@ def get_stu(student_id):
 
 
 @app.route('/api/update_homework/', methods=['POST'])
+@login_required
 def update_homework():
     content = request.json
     name = content['name']
@@ -296,6 +308,7 @@ def update_homework():
 
 
 @app.route('/api/delete/student_by_name/', methods=['POST'])
+@login_required
 def delete_student_by_name():
     content = request.json
     name = content['name']
@@ -306,6 +319,7 @@ def delete_student_by_name():
 
 
 @app.route('/api/get_data/<path:need>', methods=['POST'])
+@login_required
 def api_get_data(need):
     if need == 'face_view/':
         info = local_db.get_students_info()
@@ -332,6 +346,7 @@ def api_get_data(need):
 
 
 @app.route('/api/get_pic/<path:path>', methods=['GET'])
+@login_required
 def api_get_pic(path):
     if path is None:
         pass
@@ -349,6 +364,7 @@ def api_get_pic(path):
 
 
 @app.route('/download/<path:path>', methods=['GET'])
+@login_required
 def download(path):
     path, filename = os.path.split(path)
     # apath = config.APP_PATH.replace('\\', '/') + '/'
@@ -356,6 +372,7 @@ def download(path):
 
 
 @app.route('/api/search_check_result/', methods=['POST'])
+@login_required
 def search_check_result():
     date = request.form['date']
     pass_row_data = local_db.count_pass(date)
