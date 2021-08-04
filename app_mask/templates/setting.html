@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}口罩识别-上传数据{% endblock %}
+{% block top %}口罩识别-上传数据{% endblock %}
+{% block head %}
+{{ super ()}}
+<link href="https://cdn.bootcss.com/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css" rel="stylesheet">
+<link href="/static/assets/css/metismenu.min.css" rel="stylesheet" type="text/css">
+<link href="/static/assets/css/icons.css" rel="stylesheet" type="text/css">
+<link href="/static/css/style.css" rel="stylesheet" type="text/css">
+{% endblock %}
+{% block content %}
+    {{ super() }}
+	<div class='container-fluid'>
+	<div class="row">
+		<div class="col-sm-12 col-lg-12 col-md-12">
+			<div class="page-title-box">
+				<div class="row align-items-center">
+					<div class="col-md-12">
+						<h4 class="page-title mb-0">设置</h4>
+						<ol class="breadcrumb m-0">
+                            <li class="breadcrumb-item"><a href="/console">个人信息</a></li>
+                            <li class="breadcrumb-item"><a href="/setting/">设置</a></li>
+						</ol>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-sm-12 col-lg-12 col-md-12">
+		<div class="card">
+			<div class="card-body">
+				<h4 class="mt-0 header-title">个人信息</h4>
+                     <p>id: {{ id }}</p>
+					 <p>姓名: {{ name }}</p>
+                     <p>邮箱: {{ mail }}</p>
+                     <p>性别: {{ sex }}</p>
+                     <p>位置: {{ position }}</p>
+                     <p>身份: {{ status }}</p>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}
+{% block script %}
+{{ super() }}
+
+<script src="/static/assets/pages/form-advanced.js"></script>
+<script src="/static/assets/plugins/bootstrap-filestyle/js/bootstrap-filestyle.min.js"></script>
+{% endblock%}
