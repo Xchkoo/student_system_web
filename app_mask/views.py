@@ -28,7 +28,7 @@ def login():
         else:
             user = account.User(user_info)  # 创建用户实体
             if user.verify_password(user_passwd):  # 校验密码
-                login_user(user, remember = user_remember_me)  # 创建用户 Session
+                login_user(user, remember=user_remember_me)  # 创建用户 Session
                 msg = "登录成功"
                 return jsonify({'msg': msg, 'status': 'success'})
             else:

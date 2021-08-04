@@ -17,6 +17,7 @@
     -- 查询
 
 2. 本地搭建方法
+    - 推荐: 使用docker image 导入项目
     修改app_mask/config.py内的APP_PATH为你的本地环境目录。
     运行run.py后访问127.0.0.1，局域网访问本机ip。
 
