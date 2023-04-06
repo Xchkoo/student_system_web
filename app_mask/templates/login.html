@@ -108,13 +108,14 @@
                             });
                         },
                         success:function(res){
+                            if(res['msg'] == 'success'){
+                                window.location.replace("/console")
+                            }
                             load.close();
                             mdui.snackbar({
                                 message: res['msg']
                             });
-                            if(res['status'] == 'success'){
-                                window.location.href="/console";
-                            }
+
                         },
                         error:function(){
                             load.close();

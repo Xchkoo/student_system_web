@@ -2,38 +2,33 @@ import datetime
 import json
 import os
 import random
-from app_mask import app, config, local_db, face_detect, ocr, login_manager, account
-from flask import render_template, request, jsonify, make_response, send_from_directory, url_for, redirect
-from flask_login import UserMixin, login_required, current_user, login_user, logout_user
+from app_mask import app, config, local_db, face_detect, ocr, account
+from flask import render_template, request, jsonify, make_response, send_from_directory, url_for, redirect, flash
+from flask_login import UserMixin, login_required, current_user, login_user, logout_user, LoginManager
 import uuid
-
-
-@login_manager.user_loader  # 定义获取登录用户的方法
-def load_user(user_id):
-    return account.User.get(user_id)
 
 
 @app.route('/login/', methods=['GET', 'POST'])  # 登录
 def login():
     if request.method == 'POST':
-        user_name = request.form['username']
-        user_passwd = request.form['userpasswd']
+        username = request.form['username']
+        userpasswd = request.form['userpasswd']
         user_remember_me = False
         if request.form['remember_me'] == 'on':
             user_remember_me = True
-        user_info = account.get_user(user_name)
-        if user_info is None:
-            msg = "用户名或密码有误"
-            return jsonify({'msg': msg})
-        else:
-            user = account.User(user_info)  # 创建用户实体
-            if user.verify_password(user_passwd):  # 校验密码
+        user = account.find_user(username)
+        if user:
+            if user.check_password(userpasswd):  # 校验密码
                 login_user(user, remember=user_remember_me)  # 创建用户 Session
-                msg = "登录成功"
-                return jsonify({'msg': msg, 'status': 'success'})
+                flash('Logged in successfully!')
+                msg = "success"
+                return jsonify({'msg': msg})
             else:
                 msg = "用户名或密码有误"
                 return jsonify({'msg': msg})
+        else:
+            msg = "用户名或密码有误"
+            return jsonify({'msg': msg})
     return render_template('login.html')
 
 
@@ -291,6 +286,12 @@ def get_stu(student_id):
         student_id = content['student_id']
         return jsonify()
     return render_template('stu.html')
+
+
+@app.errorhandler(401)
+def unauthorized(e):
+    return redirect(url_for('login'))
+
 
 
 # ----------------------- api_part ----------------------------------
